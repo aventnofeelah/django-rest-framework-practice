@@ -200,13 +200,23 @@ COUNTRIES = [
 EVENT_TYPES = [
     ("Bycicle ride", "Bycicle ride"),
     ("Skiing", "Skiing"),
-    ("Cinema", "Cinema")
+    ("Cinema", "Cinema"),
+    ("Videogames", "Videogames"),
+    ("Co-education", "Co-education"),
+    ("Theatre", "Theatre"),
+    ("Walk", "Walk"),
+    ("Sport", "Sport"),
+    ("Jogging", "Jogging"),
+    ("Restaurant", "Restaurant"),
+    ("Ice skating", "Ice skating"),
+
 ]
 class User(AbstractUser):
     username = models.CharField(max_length=30, unique=True, null=False, blank=True, verbose_name="Username")
     #first_name
     #last_name
     #is_staff
+    #is_superuser
     country = models.CharField(max_length=50, choices=COUNTRIES, null=True, blank=False, verbose_name="Country")
     email = models.EmailField(null=False, blank=False, verbose_name="Email")
     avatar = models.ImageField(null=True, blank=True, verbose_name="Profile picture")
@@ -237,8 +247,11 @@ class Event(models.Model):
     max_person = models.IntegerField(validators=[MinValueValidator(1)], null=False, blank=False, verbose_name="Maximum people")
     description = models.TextField(max_length=500, null=False, blank=False, verbose_name="Description")
     completed = models.BooleanField(default=False, null=False, blank=False, verbose_name="Is completed")
+    date = models.DateTimeField(null=True, blank=False, verbose_name="Date and time")
     slug = models.SlugField(blank=True)
-
+    participants = models.ManyToManyField(User, related_name="joined_events")
+    
+    #automatically generated slug for obj
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
@@ -254,3 +267,19 @@ class Event(models.Model):
         indexes = [
             models.Index(fields=['name', 'description'])
         ]
+
+class Chat(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="chats")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages")
+    message = models.TextField(max_length=200, null=True, blank=False, verbose_name="Message text")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Chat for {self.event}"
+    
+    class Meta:
+        verbose_name = "Chat"
+        verbose_name_plural = "Chats"
+        ordering = ['created_at']
+
+    

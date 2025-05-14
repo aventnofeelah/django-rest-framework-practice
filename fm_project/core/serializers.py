@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Event
+from .models import User, Event, Chat
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,4 +17,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
+        fields = '__all__'
+
+class ChatSerializer(serializers.ModelSerializer):
+    sender = serializers.PrimaryKeyRelatedField(read_only=True)
+    event = serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = Chat
         fields = '__all__'

@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import permissions, viewsets
 from .models import User, Event
-from .permissions import IsOwnerOrReadOnly
-from .serializers import UserSerializer, UserRegisterSerializer, EventSerializer
+from .permissions import IsOwnerOrReadOnly, IsEventParticipant
+from .serializers import UserSerializer, UserRegisterSerializer, EventSerializer, ChatSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -82,8 +82,26 @@ class EventDetail(APIView):
         event = self.get_object(pk)
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-#view for user's events
-    
+
+class UserEventList(APIView):
+    permission_classes = [IsOwnerOrReadOnly]
+    def get(self, request, pk, slug, format=None):
+        user = get_object_or_404(User, pk=pk, slug=slug)
+        events = Event.objects.filter(user=user)
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+#Chat for event participants  
+class CreateChatMessage(APIView):
+    permission_classes = [IsEventParticipant]
+    def post(self, request, pk, slug, format=None):
+        event = get_object_or_404(Event, pk=pk, slug=slug)
+        serializer = ChatSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(sender=request.user, event=event)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+#добавить сообщение в чат события
+    
